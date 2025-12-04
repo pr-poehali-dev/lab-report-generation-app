@@ -4,13 +4,24 @@ import StatisticsCards from '@/components/dashboard/StatisticsCards';
 import ChartsSection from '@/components/dashboard/ChartsSection';
 import AnalyticsSection from '@/components/dashboard/AnalyticsSection';
 import InvoicesTabs from '@/components/dashboard/InvoicesTabs';
+import { ProtocolData } from '@/components/AddProtocolDialog';
 
-const invoices = [
-  { id: '2024-0156', client: 'ООО "Медицинский центр"', amount: 125000, status: 'paid', date: '2024-12-01', services: 'Анализы крови, УЗИ' },
-  { id: '2024-0157', client: 'Клиника "Здоровье"', amount: 85000, status: 'pending', date: '2024-12-03', services: 'Биохимия' },
-  { id: '2024-0158', client: 'ООО "Лайф Диагностика"', amount: 210000, status: 'paid', date: '2024-12-02', services: 'Комплексное обследование' },
-  { id: '2024-0159', client: 'Частная клиника "Медис"', amount: 95000, status: 'overdue', date: '2024-11-28', services: 'Анализы, консультации' },
-  { id: '2024-0160', client: 'Центр "Диагност"', amount: 165000, status: 'pending', date: '2024-12-04', services: 'УЗИ, рентген' },
+interface Invoice {
+  id: string;
+  client: string;
+  amount: number;
+  status: string;
+  date: string;
+  services: string;
+  protocols?: Record<string, ProtocolData[]>;
+}
+
+const initialInvoices: Invoice[] = [
+  { id: '2024-0156', client: 'ООО "Медицинский центр"', amount: 125000, status: 'paid', date: '2024-12-01', services: 'Анализы крови, УЗИ', protocols: {} },
+  { id: '2024-0157', client: 'Клиника "Здоровье"', amount: 85000, status: 'pending', date: '2024-12-03', services: 'Биохимия', protocols: {} },
+  { id: '2024-0158', client: 'ООО "Лайф Диагностика"', amount: 210000, status: 'paid', date: '2024-12-02', services: 'Комплексное обследование', protocols: {} },
+  { id: '2024-0159', client: 'Частная клиника "Медис"', amount: 95000, status: 'overdue', date: '2024-11-28', services: 'Анализы, консультации', protocols: {} },
+  { id: '2024-0160', client: 'Центр "Диагност"', amount: 165000, status: 'pending', date: '2024-12-04', services: 'УЗИ, рентген', protocols: {} },
 ];
 
 const notifications = [
@@ -20,10 +31,30 @@ const notifications = [
 ];
 
 export default function Index() {
+  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<string>('all');
+
+  const handleProtocolAdd = (invoiceId: string, serviceName: string, protocol: ProtocolData) => {
+    setInvoices(prevInvoices => 
+      prevInvoices.map(invoice => {
+        if (invoice.id === invoiceId) {
+          const protocols = invoice.protocols || {};
+          const serviceProtocols = protocols[serviceName] || [];
+          return {
+            ...invoice,
+            protocols: {
+              ...protocols,
+              [serviceName]: [...serviceProtocols, protocol]
+            }
+          };
+        }
+        return invoice;
+      })
+    );
+  };
 
   const totalPaid = 2230000;
   const totalPending = 545000;
@@ -182,6 +213,7 @@ export default function Index() {
           getStatusColor={getStatusColor}
           getStatusText={getStatusText}
           getNotificationIcon={getNotificationIcon}
+          onProtocolAdd={handleProtocolAdd}
         />
       </div>
     </div>

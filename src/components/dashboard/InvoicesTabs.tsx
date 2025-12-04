@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import AddProtocolDialog, { ProtocolData } from '@/components/AddProtocolDialog';
 
 interface Invoice {
   id: string;
@@ -14,6 +15,7 @@ interface Invoice {
   status: string;
   date: string;
   services: string;
+  protocols?: Record<string, ProtocolData[]>;
 }
 
 interface Notification {
@@ -37,6 +39,7 @@ interface InvoicesTabsProps {
   getStatusColor: (status: string) => string;
   getStatusText: (status: string) => string;
   getNotificationIcon: (type: string) => string;
+  onProtocolAdd: (invoiceId: string, serviceName: string, protocol: ProtocolData) => void;
 }
 
 export default function InvoicesTabs({
@@ -53,6 +56,7 @@ export default function InvoicesTabs({
   getStatusColor,
   getStatusText,
   getNotificationIcon,
+  onProtocolAdd,
 }: InvoicesTabsProps) {
   return (
     <Tabs defaultValue="invoices" className="animate-fade-in">
@@ -176,19 +180,62 @@ export default function InvoicesTabs({
                           <p className="font-medium">{invoice.services}</p>
                         </div>
                       </div>
-                      <div className="flex gap-2 pt-2">
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <Icon name="Download" size={16} className="mr-2" />
-                          Скачать
-                        </Button>
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <Icon name="Mail" size={16} className="mr-2" />
-                          Отправить
-                        </Button>
-                        <Button variant="default" size="sm" className="flex-1 bg-primary hover:bg-primary/90">
-                          <Icon name="Edit" size={16} className="mr-2" />
-                          Редактировать
-                        </Button>
+                      <div className="space-y-3 pt-2">
+                        <div className="flex flex-wrap gap-2">
+                          {invoice.services.split(',').map((service, idx) => {
+                            const serviceName = service.trim();
+                            const protocols = invoice.protocols?.[serviceName] || [];
+                            return (
+                              <div key={idx} className="flex-1 min-w-[200px] p-3 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div>
+                                    <p className="font-medium text-sm">{serviceName}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {protocols.length > 0 ? `Протоколов: ${protocols.length}` : 'Нет протоколов'}
+                                    </p>
+                                  </div>
+                                  <AddProtocolDialog
+                                    invoiceId={invoice.id}
+                                    serviceName={serviceName}
+                                    onProtocolAdd={(protocol) => onProtocolAdd(invoice.id, serviceName, protocol)}
+                                  />
+                                </div>
+                                {protocols.length > 0 && (
+                                  <div className="space-y-1 mt-2">
+                                    {protocols.map((protocol, pIdx) => (
+                                      <div key={pIdx} className="text-xs p-2 bg-white/80 rounded border border-blue-100">
+                                        <div className="flex items-center gap-1 font-medium text-primary">
+                                          <Icon name="FileCheck" size={12} />
+                                          {protocol.number}
+                                        </div>
+                                        {protocol.performer && (
+                                          <p className="text-muted-foreground mt-1">Исполнитель: {protocol.performer}</p>
+                                        )}
+                                        {protocol.result && (
+                                          <p className="text-muted-foreground mt-1 line-clamp-2">{protocol.result}</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" className="flex-1">
+                            <Icon name="Download" size={16} className="mr-2" />
+                            Скачать
+                          </Button>
+                          <Button variant="outline" size="sm" className="flex-1">
+                            <Icon name="Mail" size={16} className="mr-2" />
+                            Отправить
+                          </Button>
+                          <Button variant="default" size="sm" className="flex-1 bg-primary hover:bg-primary/90">
+                            <Icon name="Edit" size={16} className="mr-2" />
+                            Редактировать
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}
