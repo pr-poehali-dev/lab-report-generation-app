@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import CreateReportDialog from '@/components/CreateReportDialog';
 import {
   LineChart,
   Line,
@@ -182,10 +183,7 @@ export default function Index() {
             </h1>
             <p className="text-muted-foreground mt-2">Управление услугами и платежами</p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 shadow-lg">
-            <Icon name="FileText" className="mr-2" size={18} />
-            Создать отчет
-          </Button>
+          <CreateReportDialog />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-scale-in">
