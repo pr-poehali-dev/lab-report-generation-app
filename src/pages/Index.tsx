@@ -5,6 +5,8 @@ import ChartsSection from '@/components/dashboard/ChartsSection';
 import AnalyticsSection from '@/components/dashboard/AnalyticsSection';
 import InvoicesTabs from '@/components/dashboard/InvoicesTabs';
 import { ProtocolData } from '@/components/AddProtocolDialog';
+import { Button } from '@/components/ui/button';
+import Icon from '@/components/ui/icon';
 
 interface Invoice {
   id: string;
@@ -179,7 +181,17 @@ export default function Index() {
             </h1>
             <p className="text-muted-foreground mt-2">Управление услугами и платежами</p>
           </div>
-          <CreateReportDialog />
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => window.location.href = '/laboratory'}
+            >
+              <Icon name="FlaskConical" size={18} />
+              Журнал испытаний
+            </Button>
+            <CreateReportDialog />
+          </div>
         </div>
 
         <StatisticsCards
