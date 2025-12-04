@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -53,6 +55,9 @@ const notifications = [
 
 export default function Index() {
   const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [dateFilter, setDateFilter] = useState<string>('all');
 
   const totalPaid = 2230000;
   const totalPending = 545000;
@@ -97,6 +102,32 @@ export default function Index() {
         return 'Bell';
     }
   };
+
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter((invoice) => {
+      const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
+      const matchesSearch = 
+        invoice.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invoice.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invoice.services.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      let matchesDate = true;
+      if (dateFilter === 'current-month') {
+        const invoiceDate = new Date(invoice.date);
+        const now = new Date();
+        matchesDate = invoiceDate.getMonth() === now.getMonth() && 
+                     invoiceDate.getFullYear() === now.getFullYear();
+      } else if (dateFilter === 'last-month') {
+        const invoiceDate = new Date(invoice.date);
+        const lastMonth = new Date();
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+        matchesDate = invoiceDate.getMonth() === lastMonth.getMonth() && 
+                     invoiceDate.getFullYear() === lastMonth.getFullYear();
+      }
+      
+      return matchesStatus && matchesSearch && matchesDate;
+    });
+  }, [statusFilter, searchQuery, dateFilter]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-orange-50 p-4 sm:p-6 lg:p-8">
@@ -267,8 +298,71 @@ export default function Index() {
                 </div>
               </CardHeader>
               <CardContent>
+                <div className="mb-6 space-y-4">
+                  <div className="flex flex-col lg:flex-row gap-4">
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Icon name="Search" className="absolute left-3 top-3 text-muted-foreground" size={18} />
+                        <Input
+                          placeholder="Поиск по клиенту, номеру счета или услугам..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full lg:w-[200px]">
+                        <SelectValue placeholder="Статус" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все статусы</SelectItem>
+                        <SelectItem value="paid">Оплачен</SelectItem>
+                        <SelectItem value="pending">Ожидание</SelectItem>
+                        <SelectItem value="overdue">Просрочен</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={dateFilter} onValueChange={setDateFilter}>
+                      <SelectTrigger className="w-full lg:w-[200px]">
+                        <SelectValue placeholder="Период" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все периоды</SelectItem>
+                        <SelectItem value="current-month">Текущий месяц</SelectItem>
+                        <SelectItem value="last-month">Прошлый месяц</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {(statusFilter !== 'all' || searchQuery || dateFilter !== 'all') && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        Найдено счетов: {filteredInvoices.length}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setStatusFilter('all');
+                          setSearchQuery('');
+                          setDateFilter('all');
+                        }}
+                        className="h-7 px-2"
+                      >
+                        <Icon name="X" size={14} className="mr-1" />
+                        Сбросить фильтры
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 <div className="space-y-4">
-                  {invoices.map((invoice) => (
+                  {filteredInvoices.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Icon name="FileSearch" className="mx-auto text-muted-foreground mb-4" size={48} />
+                      <p className="text-muted-foreground">Счета не найдены</p>
+                      <p className="text-sm text-muted-foreground mt-2">Попробуйте изменить параметры фильтрации</p>
+                    </div>
+                  ) : (
+                    filteredInvoices.map((invoice) => (
                     <div
                       key={invoice.id}
                       className={`p-4 border rounded-lg hover:shadow-md transition-all cursor-pointer ${
@@ -308,7 +402,7 @@ export default function Index() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )))}
                 </div>
               </CardContent>
             </Card>
